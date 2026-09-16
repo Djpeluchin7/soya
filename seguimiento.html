@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Carrera</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans p-6 flex flex-col items-center justify-center min-h-screen">
+    <div class="max-w-md w-full bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl text-center">
+        <h1 class="text-lg font-bold text-white mb-1">Estado de tu Servicio</h1>
+        <p id="infoId" class="text-xs text-zinc-500 font-mono mb-6"></p>
+
+        <div id="estadoActualBox" class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl mb-6">
+            <span class="text-xs text-zinc-400 block">ESTADO ACTUAL</span>
+            <span id="textoEstado" class="text-xl font-bold text-amber-400 animate-pulse">Cargando...</span>
+        </div>
+
+        <div class="text-left space-y-4 text-sm bg-zinc-950 p-4 rounded-xl border border-zinc-900 mb-6">
+            <div><span class="text-zinc-500 text-xs block">ORIGEN:</span> <span id="lblOrigen" class="text-zinc-200">--</span></div>
+            <div><span class="text-zinc-500 text-xs block">DESTINO:</span> <span id="lblDestino" class="text-zinc-200">--</span></div>
+            <div><span class="text-zinc-500 text-xs block">CONDUCTOR:</span> <span id="lblConductor" class="text-zinc-200">--</span></div>
+        </div>
+
+        <p class="text-xs text-zinc-500">Esta página se actualiza automáticamente.</p>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBGE7JQPsMSoyIPX0Pvmh-Wc1ZNS1kbyt8Jn2c43KAeeZ6HyXw_yrtjbUVXsXhC7kE4A/exec";
+        const urlParams = new URLSearchParams(window.location.search);
+        const carreraId = urlParams.get('id');
+
+        document.getElementById('infoId').innerText = "ID: " + (carreraId || "No especificado");
+
+        async function consultarEstado() {
+            if(!carreraId) return;
+            try {
+                let res = await fetch(`${SCRIPT_URL}?action=obtenerCarrera&id=${carreraId}`);
+                let c = await res.json();
+                
+                if(c.error) {
+                    document.getElementById('textoEstado').innerText = "Carrera no encontrada";
+                    return;
+                }
+
+                document.getElementById('textoEstado').innerText = c.Estado;
+                document.getElementById('lblOrigen').innerText = c.Origen;
+                document.getElementById('lblDestino').innerText = c.Destino;
+                document.getElementById('lblConductor').innerText = c.Conductor || "Asignando...";
+
+                if(c.Estado === "Finalizar") {
+                    document.getElementById('textoEstado').className = "text-xl font-bold text-emerald-400";
+                }
+            } catch(e) {
+                console.error("Error consultando estado", e);
+            }
+        }
+
+        if(carreraId) {
+            setInterval(consultarEstado, 5000);
+            consultarEstado();
+        }
+    </script>
+</body>
+</html>
