@@ -57,10 +57,10 @@
             </div>
         </div>
 
-        <!-- Token de Seguridad -->
+        <!-- Conductor Asignado (Antes Token de Seguridad) -->
         <div class="bg-zinc-950 border border-zinc-800 p-4 rounded-xl text-center space-y-1">
-            <span class="text-xs text-zinc-400 block tracking-wider">TOKEN DE SEGURIDAD (Dicta al abordar)</span>
-            <span id="lblToken" class="text-3xl font-black text-pink-500 tracking-widest font-mono">----</span>
+            <span class="text-xs text-zinc-400 block tracking-wider">CONDUCTOR ASIGNADO</span>
+            <span id="lblDriver" class="text-2xl font-black text-pink-500 tracking-wide font-mono">Buscando...</span>
         </div>
 
         <!-- Detalles del Viaje -->
@@ -79,11 +79,11 @@
             </div>
         </div>
 
-        <!-- Conductor y Botón WhatsApp -->
+        <!-- Pie de página / Estado secundario -->
         <div class="driver-info flex items-center justify-between border-t border-zinc-800 pt-4">
             <div class="driver-details">
-                <h3 id="driverNombre" class="text-sm font-bold text-zinc-200">Asignando conductor</h3>
-              
+                <h3 id="driverNameFooter" class="text-sm font-bold text-zinc-200">Asignando conductor</h3>
+                <p id="driverPhone" class="text-xs text-zinc-400 mt-0.5">Espera un momento...</p>
             </div>
             <div id="actionContainer"></div>
         </div>
@@ -119,6 +119,7 @@
                     document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-400 border border-zinc-700";
                     document.getElementById('statusBadge').innerText = "Viaje Finalizado";
                     document.getElementById('infoId').innerText = "Enlace expirado";
+                    document.getElementById('lblDriver').innerText = "Finalizado";
                 } else {
                     console.log("Viaje no encontrado.");
                 }
@@ -137,7 +138,7 @@
         if(estado === "BUSCANDO") {
             badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20";
             badge.innerText = "Buscando conductor cercano...";
-            progressLine.style.width = "10%";
+            progressLine.style.width = "100px";
             carIconContainer.style.left = "5%";
         } else if(estado === "EN_CURSO" || estado === "EN CAMINO") {
             badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
@@ -154,19 +155,22 @@
         // Datos del viaje
         document.getElementById('infoOrigen').innerText = v.origenTexto || "No especificado";
         document.getElementById('infoDestino').innerText = v.destinoTexto || "No especificado";
-        document.getElementById('infoTarifa').innerText = v.tarifa || "$0.00";
+        document.getElementById('infoTarifa').innerText = v.tarifa || "$3.50";
         
-        // Token de seguridad en grande
-        document.getElementById('lblToken').innerText = tokenViaje.substring(0, 8).toUpperCase();
-
-        // Conductor y WhatsApp
-        if(v.driverNombre) {
-            document.getElementById('driverNombre').innerText = v.driverNombre;
+        // Mostrar el nombre del conductor en la caja principal (si ya lo asignaron)
+        let lblDriver = document.getElementById('lblDriver');
+        if(v.driverNombre && v.driverNombre.trim() !== "") {
+            lblDriver.innerText = v.driverNombre;
+            lblDriver.className = "text-2xl font-black text-emerald-400 tracking-wide font-mono";
+            
+            document.getElementById('driverNameFooter').innerText = v.driverNombre;
             document.getElementById('driverPhone').innerText = "Conductor asignado";
-            // Nota: El script gs no retorna driverTelefono por seguridad para el pasajero, pero si deseas agregarlo puedes pasarlo en el backend.
             document.getElementById('actionContainer').innerHTML = `<span class="bg-zinc-800 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-zinc-700">✓ Asignado</span>`;
         } else {
-            document.getElementById('driverNombre').innerText = "Asignando conductor";
+            lblDriver.innerText = "Buscando...";
+            lblDriver.className = "text-2xl font-black text-amber-400 tracking-wide font-mono";
+            
+            document.getElementById('driverNameFooter').innerText = "Asignando conductor";
             document.getElementById('driverPhone').innerText = "Espera un momento...";
             document.getElementById('actionContainer').innerHTML = "";
         }
