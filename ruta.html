@@ -22,7 +22,7 @@
         <!-- Header / Título -->
         <div class="text-center">
             <h1 class="text-xl font-bold text-pink-500 tracking-wide">Peluche Live Tracking</h1>
-            <p id="infoId" class="text-xs text-zinc-500 font-mono mt-1">ID: Cargando...</p>
+            <p id="infoId" class="text-xs text-zinc-500 font-mono mt-1">Cargando...</p>
         </div>
 
         <!-- Estado Actual -->
@@ -66,6 +66,10 @@
         <!-- Detalles del Viaje -->
         <div class="text-left space-y-3 text-sm bg-zinc-950 p-4 rounded-xl border border-zinc-800">
             <div>
+                <span class="text-zinc-500 text-xs block font-mono">ORIGEN:</span> 
+                <span id="infoOrigen" class="text-zinc-200 font-medium">Cargando...</span>
+            </div>
+            <div>
                 <span class="text-zinc-500 text-xs block font-mono">DESTINO:</span> 
                 <span id="infoDestino" class="text-zinc-200 font-medium">Cargando...</span>
             </div>
@@ -84,34 +88,39 @@
             <div id="actionContainer"></div>
         </div>
 
-        <p class="text-center text-[10px5] text-zinc-600">La página se actualiza automáticamente en tiempo real.</p>
+        <p class="text-center text-[10px] text-zinc-600">La página se actualiza automáticamente en tiempo real.</p>
     </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby5NtjpLlXwSpOfhFrcupT5WDcoUcdichUkSIcF73p0flh1jrGpHVB5lybry3ecZUxPdQ/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwz8_TX9uR4jQ0Z6u149_0BVkpRgr44TIPnnokvdJZ0CtZ2bxXVPaMUb7E3jOWT2mlf/exec";
     
     const urlParams = new URLSearchParams(window.location.search);
-    const viajeId = urlParams.get('id');
+    const tokenViaje = urlParams.get('token');
 
     window.onload = function() {
-        if(!viajeId) {
-            document.getElementById('statusBadge').innerText = "ID no válido";
+        if(!tokenViaje) {
+            document.getElementById('statusBadge').innerText = "Token no válido o ausente";
             document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
+            document.getElementById('infoId').innerText = "Sin token de acceso";
             return;
         }
-        document.getElementById('infoId').innerText = "ID: " + viajeId;
+        document.getElementById('infoId').innerText = "Token Activo";
         obtenerDetallesViaje();
         setInterval(obtenerDetallesViaje, 5000);
     };
 
     function obtenerDetallesViaje() {
-        fetch(WEB_APP_URL + "?action=obtenerViajePorId&id=" + viajeId)
+        fetch(WEB_APP_URL + "?action=obtenerViajePorToken&token=" + encodeURIComponent(tokenViaje))
             .then(res => res.json())
             .then(res => {
                 if(res.status === 'success' && res.viaje) {
                     actualizarInterfaz(res.viaje);
+                } else if(res.status === 'expired') {
+                    document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-400 border border-zinc-700";
+                    document.getElementById('statusBadge').innerText = "Viaje Finalizado";
+                    document.getElementById('infoId').innerText = "Enlace expirado";
                 } else {
-                    console.log("Viaje no encontrado o finalizado.");
+                    console.log("Viaje no encontrado.");
                 }
             })
             .catch(err => console.error("Error al sincronizar viaje:", err));
@@ -143,20 +152,23 @@
         }
 
         // Datos del viaje
+        document.getElementById('infoOrigen').innerText = v.origenTexto || "No especificado";
         document.getElementById('infoDestino').innerText = v.destinoTexto || "No especificado";
-        document.getElementById('infoTarifa').innerText = v.tarifa ? "$" + v.tarifa : "$0.0";
+        document.getElementById('infoTarifa').innerText = v.tarifa || "$3.50";
         
-        // Token de seguridad
-        document.getElementById('lblToken').innerText = v.Token || v.token || "----";
+        // Token de seguridad en grande
+        document.getElementById('lblToken').innerText = tokenViaje.substring(0, 8).toUpperCase();
 
         // Conductor y WhatsApp
         if(v.driverNombre) {
             document.getElementById('driverName').innerText = v.driverNombre;
-            document.getElementById('driverPhone').innerText = "Tel: " + (v.driverTelefono || "N/A");
-            if(v.driverTelefono) {
-                let telLimpio = String(v.driverTelefono).replace(/\D/g, '');
-                document.getElementById('actionContainer').innerHTML = `<a href="https://wa.me/${telLimpio}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors">💬 Chat Driver</a>`;
-            }
+            document.getElementById('driverPhone').innerText = "Conductor asignado";
+            // Nota: El script gs no retorna driverTelefono por seguridad para el pasajero, pero si deseas agregarlo puedes pasarlo en el backend.
+            document.getElementById('actionContainer').innerHTML = `<span class="bg-zinc-800 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-zinc-700">✓ Asignado</span>`;
+        } else {
+            document.getElementById('driverName').innerText = "Asignando conductor";
+            document.getElementById('driverPhone').innerText = "Espera un momento...";
+            document.getElementById('actionContainer').innerHTML = "";
         }
     }
 </script>
