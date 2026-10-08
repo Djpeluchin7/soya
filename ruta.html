@@ -3,81 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seguimiento de Carrera</title>
+    <title>Peluche - Seguimiento de tu Viaje</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .car-bounce {
+            animation: bounce-slow 1s infinite ease-in-out;
+        }
+    </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 font-sans p-6 flex flex-col items-center justify-center min-h-screen">
-    <div class="max-w-md w-full bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-xl text-center space-y-6">
-        <div>
-            <h1 class="text-lg font-bold text-white mb-1">Estado de tu Servicio</h1>
-            <p id="infoId" class="text-xs text-zinc-500 font-mono"></p>
+<body class="bg-zinc-950 text-zinc-100 font-sans p-4 flex flex-col items-center justify-center min-h-screen">
+    
+    <div class="max-w-md w-full bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-2xl space-y-6">
+        
+        <!-- Header / Título -->
+        <div class="text-center">
+            <h1 class="text-xl font-bold text-pink-500 tracking-wide">Peluche Live Tracking</h1>
+            <p id="infoId" class="text-xs text-zinc-500 font-mono mt-1">ID: Cargando...</p>
         </div>
 
         <!-- Estado Actual -->
-        <div id="estadoActualBox" class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl">
-            <span class="text-xs text-zinc-400 block mb-1">ESTADO ACTUAL</span>
-            <span id="textoEstado" class="text-xl font-bold text-amber-400 animate-pulse">Cargando...</span>
+        <div class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-1">
+            <span class="text-xs text-zinc-400 block tracking-wider">ESTADO ACTUAL</span>
+            <div id="statusBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                Buscando Conductor...
+            </div>
         </div>
 
-        <!-- Token de Seguridad para el Cliente -->
-        <div class="bg-zinc-950 border border-zinc-800 p-4 rounded-xl space-y-1">
-            <span class="text-xs text-zinc-400 block">TOKEN DE SEGURIDAD (Dicta este código al abordar)</span>
-            <span id="lblToken" class="text-2xl font-bold text-amber-400 tracking-wider font-mono">----</span>
+        <!-- Barra de Progreso con Carrito -->
+        <div class="bg-zinc-950 border border-zinc-800 p-5 rounded-xl space-y-3">
+            <div class="flex justify-between text-xs text-zinc-400 font-mono px-1">
+                <span>Buscando</span>
+                <span>En Camino</span>
+                <span>Finalizado</span>
+            </div>
+            
+            <!-- Contenedor de la línea y el carro -->
+            <div class="relative w-full py-3">
+                <!-- Línea de fondo -->
+                <div class="absolute inset-y-1/2 left-0 right-0 h-1 bg-zinc-800 rounded-full -translate-y-1/2"></div>
+                <!-- Línea de progreso activa -->
+                <div id="progressLine" class="absolute inset-y-1/2 left-0 h-1 bg-pink-500 rounded-full -translate-y-1/2 transition-all duration-500" style="width: 0%;"></div>
+                
+                <!-- Icono del Carrito desplazable -->
+                <div id="carIconContainer" class="absolute top-1/2 -translate-y-1/2 -ml-4 transition-all duration-500 z-10" style="left: 0%;">
+                    <div class="bg-zinc-900 border border-zinc-700 w-8 h-8 rounded-full flex items-center justify-center shadow-lg text-base car-bounce">
+                        🚗
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Detalles del Servicio -->
-        <div class="text-left space-y-3 text-sm bg-zinc-950 p-4 rounded-xl border border-zinc-900">
-            <div><span class="text-zinc-500 text-xs block">ORIGEN:</span> <span id="lblOrigen" class="text-zinc-200">--</span></div>
-            <div><span class="text-zinc-500 text-xs block">DESTINO:</span> <span id="lblDestino" class="text-zinc-200">--</span></div>
-            <div><span class="text-zinc-500 text-xs block">CONDUCTOR:</span> <span id="lblConductor" class="text-zinc-200">--</span></div>
+        <!-- Token de Seguridad -->
+        <div class="bg-zinc-950 border border-zinc-800 p-4 rounded-xl text-center space-y-1">
+            <span class="text-xs text-zinc-400 block tracking-wider">TOKEN DE SEGURIDAD (Dicta al abordar)</span>
+            <span id="lblToken" class="text-3xl font-black text-pink-500 tracking-widest font-mono">----</span>
         </div>
 
-        <p class="text-xs text-zinc-500">Esta página se actualiza automáticamente.</p>
+        <!-- Detalles del Viaje -->
+        <div class="text-left space-y-3 text-sm bg-zinc-950 p-4 rounded-xl border border-zinc-800">
+            <div>
+                <span class="text-zinc-500 text-xs block font-mono">DESTINO:</span> 
+                <span id="infoDestino" class="text-zinc-200 font-medium">Cargando...</span>
+            </div>
+            <div>
+                <span class="text-zinc-500 text-xs block font-mono">TARIFA ESTIMADA:</span> 
+                <span id="infoTarifa" class="text-zinc-200 font-medium">--</span>
+            </div>
+        </div>
+
+        <!-- Conductor y Botón WhatsApp -->
+        <div class="driver-info flex items-center justify-between border-t border-zinc-800 pt-4">
+            <div class="driver-details">
+                <h3 id="driverName" class="text-sm font-bold text-zinc-200">Asignando conductor</h3>
+                <p id="driverPhone" class="text-xs text-zinc-400 mt-0.5">Espera un momento...</p>
+            </div>
+            <div id="actionContainer"></div>
+        </div>
+
+        <p class="text-center text-[10px5] text-zinc-600">La página se actualiza automáticamente en tiempo real.</p>
     </div>
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7yzs-VFf63rgzw-wbdAFIQpYI4INdReUL_F8ooGbYC8ZDD1REf67truM57oW9-q6W/exec";
-        const urlParams = new URLSearchParams(window.location.search);
-        const carreraId = urlParams.get('id');
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7yzs-VFf63rgzw-wbdAFIQpYI4INdReUL_F8ooGbYC8ZDD1REf67truM57oW9-q6W/exec";
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const viajeId = urlParams.get('id');
 
-        document.getElementById('infoId').innerText = "ID: " + (carreraId || "No especificado");
+    window.onload = function() {
+        if(!viajeId) {
+            document.getElementById('statusBadge').innerText = "ID no válido";
+            document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
+            return;
+        }
+        document.getElementById('infoId').innerText = "ID: " + viajeId;
+        obtenerDetallesViaje();
+        setInterval(obtenerDetallesViaje, 5000);
+    };
 
-        async function consultarEstado() {
-            if(!carreraId) return;
-            try {
-                let res = await fetch(`${SCRIPT_URL}?action=obtenerCarrera&id=${carreraId}`);
-                let c = await res.json();
-                
-                if(c.error) {
-                    document.getElementById('textoEstado').innerText = "Carrera no encontrada";
-                    document.getElementById('textoEstado').className = "text-xl font-bold text-rose-500";
-                    return;
+    function obtenerDetallesViaje() {
+        fetch(WEB_APP_URL + "?action=obtenerViajePorId&id=" + viajeId)
+            .then(res => res.json())
+            .then(res => {
+                if(res.status === 'success' && res.viaje) {
+                    actualizarInterfaz(res.viaje);
+                } else {
+                    console.log("Viaje no encontrado o finalizado.");
                 }
+            })
+            .catch(err => console.error("Error al sincronizar viaje:", err));
+    }
 
-                document.getElementById('textoEstado').innerText = c.Estado;
-                document.getElementById('lblOrigen').innerText = c.Origen;
-                document.getElementById('lblDestino').innerText = c.Destino;
-                document.getElementById('lblConductor').innerText = c.Conductor || "Asignando...";
-                
-                // Muestra el token de seguridad devuelto por la hoja
-                document.getElementById('lblToken').innerText = c.Token || c.token || "----";
+    function actualizarInterfaz(v) {
+        let badge = document.getElementById('statusBadge');
+        let progressLine = document.getElementById('progressLine');
+        let carIconContainer = document.getElementById('carIconContainer');
 
-                if(c.Estado === "Finalizar") {
-                    document.getElementById('textoEstado').className = "text-xl font-bold text-emerald-400";
-                    document.getElementById('textoEstado').classList.remove('animate-pulse');
-                }
-            } catch(e) { 
-                console.error("Error consultando estado", e); 
+        let estado = v.estado ? v.estado.toUpperCase() : "BUSCANDO";
+
+        // Actualizar estados visuales de la barra y la insignia
+        if(estado === "BUSCANDO") {
+            badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20";
+            badge.innerText = "Buscando conductor cercano...";
+            progressLine.style.width = "10%";
+            carIconContainer.style.left = "5%";
+        } else if(estado === "EN_CURSO" || estado === "EN CAMINO") {
+            badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            badge.innerText = "¡Conductor en camino!";
+            progressLine.style.width = "65%";
+            carIconContainer.style.left = "65%";
+        } else if(estado === "FINALIZADO") {
+            badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-400 border border-zinc-700";
+            badge.innerText = "Viaje Finalizado";
+            progressLine.style.width = "100%";
+            carIconContainer.style.left = "95%";
+        }
+
+        // Datos del viaje
+        document.getElementById('infoDestino').innerText = v.destinoTexto || "No especificado";
+        document.getElementById('infoTarifa').innerText = v.tarifa ? "$" + v.tarifa : "$3.50";
+        
+        // Token de seguridad
+        document.getElementById('lblToken').innerText = v.Token || v.token || "----";
+
+        // Conductor y WhatsApp
+        if(v.driverNombre) {
+            document.getElementById('driverName').innerText = v.driverNombre;
+            document.getElementById('driverPhone').innerText = "Tel: " + (v.driverTelefono || "N/A");
+            if(v.driverTelefono) {
+                let telLimpio = String(v.driverTelefono).replace(/\D/g, '');
+                document.getElementById('actionContainer').innerHTML = `<a href="https://wa.me/${telLimpio}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors">💬 Chat Driver</a>`;
             }
         }
-
-        if(carreraId) {
-            setInterval(consultarEstado, 5000);
-            consultarEstado();
-        } else {
-            document.getElementById('textoEstado').innerText = "ID no válido";
-            document.getElementById('textoEstado').className = "text-xl font-bold text-rose-500";
-        }
-    </script>
+    }
+</script>
 </body>
 </html>
