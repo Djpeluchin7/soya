@@ -73,7 +73,10 @@
                 <span class="text-zinc-500 text-xs block font-mono">DESTINO:</span> 
                 <span id="infoDestino" class="text-zinc-200 font-medium">Cargando...</span>
             </div>
-          
+            <div>
+                <span class="text-zinc-500 text-xs block font-mono">TARIFA ESTIMADA:</span> 
+                <span id="infoTarifa" class="text-zinc-200 font-medium">--</span>
+            </div>
         </div>
 
         <!-- Conductor y Botón WhatsApp -->
@@ -89,7 +92,7 @@
     </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwz8_TX9uR4jQ0Z6u149_0BVkpRgr44TIPnnokvdJZ0CtZ2bxXVPaMUb7E3jOWT2mlf/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7yzs-VFf63rgzw-wbdAFIQpYI4INdReUL_F8ooGbYC8ZDD1REf67truM57oW9-q6W/exec";
     
     const urlParams = new URLSearchParams(window.location.search);
     const tokenViaje = urlParams.get('token');
@@ -151,7 +154,7 @@
         // Datos del viaje
         document.getElementById('infoOrigen').innerText = v.origenTexto || "No especificado";
         document.getElementById('infoDestino').innerText = v.destinoTexto || "No especificado";
-        document.getElementById('infoTarifa').innerText = v.tarifa || "$3.50";
+        document.getElementById('infoTarifa').innerText = v.tarifa || "$0.00";
         
         // Token de seguridad en grande
         document.getElementById('lblToken').innerText = tokenViaje.substring(0, 8).toUpperCase();
