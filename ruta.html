@@ -82,8 +82,8 @@
         <!-- Conductor y Botón WhatsApp -->
         <div class="driver-info flex items-center justify-between border-t border-zinc-800 pt-4">
             <div class="driver-details">
-                <h3 id="driverName" class="text-sm font-bold text-zinc-200">Asignando conductor</h3>
-                <p id="driverPhone" class="text-xs text-zinc-400 mt-0.5">Espera un momento...</p>
+                <h3 id="driverNombre" class="text-sm font-bold text-zinc-200">Asignando conductor</h3>
+              
             </div>
             <div id="actionContainer"></div>
         </div>
@@ -161,12 +161,12 @@
 
         // Conductor y WhatsApp
         if(v.driverNombre) {
-            document.getElementById('driverName').innerText = v.driverNombre;
+            document.getElementById('driverNombre').innerText = v.driverNombre;
             document.getElementById('driverPhone').innerText = "Conductor asignado";
             // Nota: El script gs no retorna driverTelefono por seguridad para el pasajero, pero si deseas agregarlo puedes pasarlo en el backend.
             document.getElementById('actionContainer').innerHTML = `<span class="bg-zinc-800 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-zinc-700">✓ Asignado</span>`;
         } else {
-            document.getElementById('driverName').innerText = "Asignando conductor";
+            document.getElementById('driverNombre').innerText = "Asignando conductor";
             document.getElementById('driverPhone').innerText = "Espera un momento...";
             document.getElementById('actionContainer').innerHTML = "";
         }
