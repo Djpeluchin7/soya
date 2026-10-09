@@ -21,33 +21,42 @@
         
         <!-- Header / Título -->
         <div class="text-center">
-            <h1 class="text-xl font-bold text-pink-500 tracking-wide">Peluche Live Tracking</h1>
-            <p id="infoId" class="text-xs text-zinc-500 font-mono mt-1">Cargando...</p>
+            <h1 class="text-xl font-bold text-white tracking-wide">Peluche Live Tracking</h1>
+            <p id="infoId" class="text-xs text-zinc-500 font-mono mt-1">ID: Cargando...</p>
         </div>
 
         <!-- Estado Actual -->
-        <div class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-1">
+        <div class="p-4 bg-zinc-950 border border-zinc-800 rounded-xl text-center space-y-2">
             <span class="text-xs text-zinc-400 block tracking-wider">ESTADO ACTUAL</span>
             <div id="statusBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 Buscando Conductor...
+            </div>
+            <!-- Botón para repetir audio manualmente -->
+            <div>
+                <button onclick="reproducirVozEstadoActual()" class="text-[11px] text-pink-400 hover:text-pink-300 underline mt-1 cursor-pointer">
+                    🔊 Escuchar estado de voz
+                </button>
             </div>
         </div>
 
         <!-- Barra de Progreso con Carrito -->
         <div class="bg-zinc-950 border border-zinc-800 p-5 rounded-xl space-y-3">
-            <div class="flex justify-between text-xs text-zinc-400 font-mono px-1">
+            <div class="flex justify-between text-[10px] text-zinc-400 font-mono px-1">
                 <span>Buscando</span>
+                <span>Aceptado</span>
                 <span>En Camino</span>
-                <span>Finalizado</span>
+                <span>Afuera</span>
+                <span>A Bordo</span>
+                <span>Fin</span>
             </div>
-            
+                    
             <!-- Contenedor de la línea y el carro -->
             <div class="relative w-full py-3">
                 <!-- Línea de fondo -->
                 <div class="absolute inset-y-1/2 left-0 right-0 h-1 bg-zinc-800 rounded-full -translate-y-1/2"></div>
                 <!-- Línea de progreso activa -->
-                <div id="progressLine" class="absolute inset-y-1/2 left-0 h-1 bg-pink-500 rounded-full -translate-y-1/2 transition-all duration-500" style="width: 0%;"></div>
-                
+                <div id="progressLine" class="absolute inset-y-1/2 left-0 h-1 bg-green-500 rounded-full -translate-y-1/2 transition-all duration-500" style="width: 0%;"></div>
+                            
                 <!-- Icono del Carrito desplazable -->
                 <div id="carIconContainer" class="absolute top-1/2 -translate-y-1/2 -ml-4 transition-all duration-500 z-10" style="left: 0%;">
                     <div class="bg-zinc-900 border border-zinc-700 w-8 h-8 rounded-full flex items-center justify-center shadow-lg text-base car-bounce">
@@ -57,10 +66,10 @@
             </div>
         </div>
 
-        <!-- Conductor Asignado (Antes Token de Seguridad) -->
+        <!-- Token de Seguridad -->
         <div class="bg-zinc-950 border border-zinc-800 p-4 rounded-xl text-center space-y-1">
-            <span class="text-xs text-zinc-400 block tracking-wider">CONDUCTOR ASIGNADO</span>
-            <span id="lblDriver" class="text-2xl font-black text-pink-500 tracking-wide font-mono">Buscando...</span>
+            <span class="text-xs text-zinc-400 block tracking-wider">TOKEN DE SEGURIDAD (Dicta al abordar)</span>
+            <span id="lblToken" class="text-3xl font-black text-pink-500 tracking-widest font-mono">----</span>
         </div>
 
         <!-- Detalles del Viaje -->
@@ -73,16 +82,16 @@
                 <span class="text-zinc-500 text-xs block font-mono">DESTINO:</span> 
                 <span id="infoDestino" class="text-zinc-200 font-medium">Cargando...</span>
             </div>
-            <div>
+            <div hidden>
                 <span class="text-zinc-500 text-xs block font-mono">TARIFA ESTIMADA:</span> 
                 <span id="infoTarifa" class="text-zinc-200 font-medium">--</span>
             </div>
         </div>
 
-        <!-- Pie de página / Estado secundario -->
+        <!-- Conductor y Botón WhatsApp -->
         <div class="driver-info flex items-center justify-between border-t border-zinc-800 pt-4">
             <div class="driver-details">
-                <h3 id="driverNameFooter" class="text-sm font-bold text-zinc-200">Asignando conductor</h3>
+                <h3 id="driverName" class="text-sm font-bold text-zinc-200">Asignando conductor</h3>
                 <p id="driverPhone" class="text-xs text-zinc-400 mt-0.5">Espera un momento...</p>
             </div>
             <div id="actionContainer"></div>
@@ -92,34 +101,33 @@
     </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7yzs-VFf63rgzw-wbdAFIQpYI4INdReUL_F8ooGbYC8ZDD1REf67truM57oW9-q6W/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwyQxSzLC9p2cvLXvD9Kug0TlmgHzmAuMEoceZalP87pdADrUIrPlA92qKi3mY3Jk5D/exec";
     
     const urlParams = new URLSearchParams(window.location.search);
     const tokenViaje = urlParams.get('token');
+
+    let ultimoEstadoReproducido = "";
+    let textoVozActual = "";
 
     window.onload = function() {
         if(!tokenViaje) {
             document.getElementById('statusBadge').innerText = "Token no válido o ausente";
             document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
-            document.getElementById('infoId').innerText = "Sin token de acceso";
             return;
         }
-        document.getElementById('infoId').innerText = "Token Activo";
         obtenerDetallesViaje();
         setInterval(obtenerDetallesViaje, 5000);
     };
 
     function obtenerDetallesViaje() {
-        fetch(WEB_APP_URL + "?action=obtenerViajePorToken&token=" + encodeURIComponent(tokenViaje))
+        fetch(WEB_APP_URL + "?action=obtenerViajePorToken&token=" + tokenViaje)
             .then(res => res.json())
             .then(res => {
                 if(res.status === 'success' && res.viaje) {
                     actualizarInterfaz(res.viaje);
                 } else if(res.status === 'expired') {
-                    document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-400 border border-zinc-700";
+                    document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
                     document.getElementById('statusBadge').innerText = "Viaje Finalizado";
-                    document.getElementById('infoId').innerText = "Enlace expirado";
-                    document.getElementById('lblDriver').innerText = "Finalizado";
                 } else {
                     console.log("Viaje no encontrado.");
                 }
@@ -127,50 +135,110 @@
             .catch(err => console.error("Error al sincronizar viaje:", err));
     }
 
+    function hablarTexto(texto) {
+        if (!('speechSynthesis' in window)) return;
+        // Cancela cualquier audio previo para que no se encime
+        window.speechSynthesis.cancel();
+        
+        let mensaje = new SpeechSynthesisUtterance(texto);
+        mensaje.lang = 'es-ES';
+        mensaje.rate = 1.0;
+        window.speechSynthesis.speak(mensaje);
+    }
+
+    function reproducirVozEstadoActual() {
+        if (textoVozActual) {
+            hablarTexto(textoVozActual);
+        }
+    }
+
     function actualizarInterfaz(v) {
         let badge = document.getElementById('statusBadge');
         let progressLine = document.getElementById('progressLine');
         let carIconContainer = document.getElementById('carIconContainer');
 
-        let estado = v.estado ? v.estado.toUpperCase() : "BUSCANDO";
+        let estado = v.estado ? v.estado.toUpperCase().trim() : "BUSCANDO";
+        document.getElementById('infoId').innerText = "ID: " + (v.id || "N/A");
 
-        // Actualizar estados visuales de la barra y la insignia
-        if(estado === "BUSCANDO") {
-            badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20";
-            badge.innerText = "Buscando conductor cercano...";
-            progressLine.style.width = "100px";
-            carIconContainer.style.left = "5%";
-        } else if(estado === "EN_CURSO" || estado === "EN CAMINO") {
-            badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-            badge.innerText = "¡Conductor en camino!";
-            progressLine.style.width = "65%";
-            carIconContainer.style.left = "65%";
-        } else if(estado === "FINALIZADO") {
-            badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-400 border border-zinc-700";
-            badge.innerText = "Viaje Finalizado";
-            progressLine.style.width = "100%";
-            carIconContainer.style.left = "95%";
+        let porcentaje = "0%";
+        let mensajeVoz = "";
+
+        // Manejo de los 6 estados solicitados
+        switch(estado) {
+            case "BUSCANDO":
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                badge.innerText = "Buscando Conductor...";
+                porcentaje = "5%";
+                mensajeVoz = "Buscando conductor cercano para tu viaje.";
+                break;
+            case "ACEPTADO":
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/20";
+                badge.innerText = "Conductor Aceptado";
+                porcentaje = "20%";
+                mensajeVoz = "Tu viaje ha sido aceptado por un conductor.";
+                break;
+            case "EN_CAMINO":
+            case "EN CAMINO":
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20";
+                badge.innerText = "Conductor En Camino";
+                porcentaje = "45%_";
+                porcentaje = "45%";
+                mensajeVoz = "El conductor va en camino hacia tu punto de origen.";
+                break;
+            case "AFUERA":
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20";
+                badge.innerText = "Conductor Afuera";
+                porcentaje = "70%";
+                mensajeVoz = "El conductor ha llegado y te espera afuera.";
+                break;
+            case "ABORDO":
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                badge.innerText = "A Bordo / En Destino";
+                porcentaje = "90%";
+                mensajeVoz = "Estás a bordo. Dirigiéndose a tu destino.";
+                break;
+            case "FINALIZADO":
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-400 border border-zinc-700";
+                badge.innerText = "Viaje Finalizado";
+                porcentaje = "100%";
+                mensajeVoz = "Tu viaje ha finalizado. Gracias por viajar con Peluche.";
+                break;
+            default:
+                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20";
+                badge.innerText = estado;
+                porcentaje = "10%";
+                mensajeVoz = "Estado actualizado a " + estado;
+        }
+
+        progressLine.style.width = porcentaje;
+        carIconContainer.style.left = porcentaje;
+
+        // Si el estado cambió con respecto al último ciclo, emitir la nota de voz automáticamente
+        if (estado !== ultimoEstadoReproducido) {
+            ultimoEstadoReproducido = estado;
+            textoVozActual = mensajeVoz;
+            hablarTexto(mensajeVoz);
         }
 
         // Datos del viaje
         document.getElementById('infoOrigen').innerText = v.origenTexto || "No especificado";
         document.getElementById('infoDestino').innerText = v.destinoTexto || "No especificado";
         document.getElementById('infoTarifa').innerText = v.tarifa || "$3.50";
-        
-        // Mostrar el nombre del conductor en la caja principal (si ya lo asignaron)
-        let lblDriver = document.getElementById('lblDriver');
-        if(v.driverNombre && v.driverNombre.trim() !== "") {
-            lblDriver.innerText = v.driverNombre;
-            lblDriver.className = "text-2xl font-black text-emerald-400 tracking-wide font-mono";
-            
-            document.getElementById('driverNameFooter').innerText = v.driverNombre;
+        document.getElementById('lblToken').innerText = tokenViaje.substring(0, 6).toUpperCase();
+
+        // Conductor y botón WhatsApp directo (Número: 557835694)
+        if(v.driverNombre && v.driverNombre !== "") {
+            document.getElementById('driverName').innerText = v.driverNombre;
             document.getElementById('driverPhone').innerText = "Conductor asignado";
-            document.getElementById('actionContainer').innerHTML = `<span class="bg-zinc-800 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold border border-zinc-700">✓ Asignado</span>`;
-        } else {
-            lblDriver.innerText = "Buscando...";
-            lblDriver.className = "text-2xl font-black text-amber-400 tracking-wide font-mono";
             
-            document.getElementById('driverNameFooter').innerText = "Asignando conductor";
+            // Botón de WhatsApp integrado al lado
+            document.getElementById('actionContainer').innerHTML = `
+                <a href="https://wa.me/557835694?text=Hola%20conductor,%20necesito%20contactarte%20por%20mi%20viaje." target="_blank" 
+                   class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors shadow-md">
+                   💬 WhatsApp
+                </a>`;
+        } else {
+            document.getElementById('driverName').innerText = "Asignando conductor";
             document.getElementById('driverPhone').innerText = "Espera un momento...";
             document.getElementById('actionContainer').innerHTML = "";
         }
