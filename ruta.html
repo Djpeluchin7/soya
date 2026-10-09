@@ -15,8 +15,17 @@
         }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 font-sans p-4 flex flex-col items-center justify-center min-h-screen">
+<body class="bg-zinc-950 text-zinc-100 font-sans p-4 flex flex-col items-center justify-center min-h-screen relative">
     
+    <!-- PANTALLA DE BLOQUEO CUANDO EL VIAJE FINALIZA -->
+    <div id="expiredScreen" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-6 text-center space-y-4 hidden">
+        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="text-4xl">🔒</div>
+            <h2 class="text-xl font-bold text-white tracking-wide">Enlace Expirado</h2>
+            <p class="text-sm text-zinc-400">Este enlace temporal expiró porque el viaje ha finalizado.</p>
+        </div>
+    </div>
+
     <div class="max-w-md w-full bg-zinc-900 border border-zinc-800 p-6 rounded-2xl shadow-2xl space-y-6">
         
         <!-- Header / Título -->
@@ -101,7 +110,7 @@
     </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwyQxSzLC9p2cvLXvD9Kug0TlmgHzmAuMEoceZalP87pdADrUIrPlA92qKi3mY3Jk5D/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyFfaTIOLQIie3fuhZMnQ2oDQ_PWSbuNFsX5htr-SgE2IvBtaNhmV_LpJCwkWGAHOnd/exec";
     
     const urlParams = new URLSearchParams(window.location.search);
     const tokenViaje = urlParams.get('token');
@@ -126,8 +135,8 @@
                 if(res.status === 'success' && res.viaje) {
                     actualizarInterfaz(res.viaje);
                 } else if(res.status === 'expired') {
-                    document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                    document.getElementById('statusBadge').innerText = "Viaje Finalizado";
+                    // Muestra la pantalla negra de expirado automáticamente
+                    document.getElementById('expiredScreen').classList.remove('hidden');
                 } else {
                     console.log("Viaje no encontrado.");
                 }
@@ -137,7 +146,6 @@
 
     function hablarTexto(texto) {
         if (!('speechSynthesis' in window)) return;
-        // Cancela cualquier audio previo para que no se encime
         window.speechSynthesis.cancel();
         
         let mensaje = new SpeechSynthesisUtterance(texto);
@@ -160,10 +168,15 @@
         let estado = v.estado ? v.estado.toUpperCase().trim() : "BUSCANDO";
         document.getElementById('infoId').innerText = "ID: " + (v.id || "N/A");
 
+        // Verificación directa por si el estado viene en la respuesta como FINALIZADO
+        if (estado === "FINALIZADO") {
+            document.getElementById('expiredScreen').classList.remove('hidden');
+            return;
+        }
+
         let porcentaje = "0%";
         let mensajeVoz = "";
 
-        // Manejo de los 6 estados solicitados
         switch(estado) {
             case "BUSCANDO":
                 badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20";
@@ -181,7 +194,6 @@
             case "EN CAMINO":
                 badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20";
                 badge.innerText = "Conductor En Camino";
-                porcentaje = "45%_";
                 porcentaje = "45%";
                 mensajeVoz = "El conductor va en camino hacia tu punto de origen.";
                 break;
@@ -197,12 +209,6 @@
                 porcentaje = "90%";
                 mensajeVoz = "Estás a bordo. Dirigiéndose a tu destino.";
                 break;
-            case "FINALIZADO":
-                badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-zinc-500/10 text-zinc-400 border border-zinc-700";
-                badge.innerText = "Viaje Finalizado";
-                porcentaje = "100%";
-                mensajeVoz = "Tu viaje ha finalizado. Gracias por viajar con Peluche.";
-                break;
             default:
                 badge.className = "inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20";
                 badge.innerText = estado;
@@ -213,29 +219,25 @@
         progressLine.style.width = porcentaje;
         carIconContainer.style.left = porcentaje;
 
-        // Si el estado cambió con respecto al último ciclo, emitir la nota de voz automáticamente
         if (estado !== ultimoEstadoReproducido) {
             ultimoEstadoReproducido = estado;
             textoVozActual = mensajeVoz;
             hablarTexto(mensajeVoz);
         }
 
-        // Datos del viaje
         document.getElementById('infoOrigen').innerText = v.origenTexto || "No especificado";
         document.getElementById('infoDestino').innerText = v.destinoTexto || "No especificado";
         document.getElementById('infoTarifa').innerText = v.tarifa || "$3.50";
         document.getElementById('lblToken').innerText = tokenViaje.substring(0, 6).toUpperCase();
 
-        // Conductor y botón WhatsApp directo (Número: 557835694)
         if(v.driverNombre && v.driverNombre !== "") {
             document.getElementById('driverName').innerText = v.driverNombre;
             document.getElementById('driverPhone').innerText = "Conductor asignado";
             
-            // Botón de WhatsApp integrado al lado
             document.getElementById('actionContainer').innerHTML = `
-                <a href="https://wa.me/+12402815240?text=Hola%20conductor,%20necesito%20contactarte%20por%20mi%20viaje." target="_blank" 
+                <a href="https://wa.me/557835694?text=Hola%20conductor,%20necesito%20contactarte%20por%20mi%20viaje." target="_blank" 
                    class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors shadow-md">
-                   💬 WhatsApp
+                    💬 WhatsApp
                 </a>`;
         } else {
             document.getElementById('driverName').innerText = "Asignando conductor";
